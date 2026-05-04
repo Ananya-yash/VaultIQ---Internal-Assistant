@@ -1,0 +1,27 @@
+# Secrets
+.env
+
+# Local Qdrant storage
+qdrant_storage/
+
+# Data files
+data/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Debug and test logs
+debug-*.log
+ingestion_log.txt
+check_db.py
+test_rbac.py
+
+# IDE
+.vscode/
+.cursor/
+
+# OS
+.DS_Store
+Thumbs.db

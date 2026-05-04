@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VaultIQ</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f2f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 40px;
+      width: 380px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #1a73e8;
+      text-align: center;
+    }
+
+    .card .subtitle {
+      margin: 0 0 28px;
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+    }
+
+    #login-form input[type="text"],
+    #login-form input[type="password"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+
+    #login-form input[type="text"]:focus,
+    #login-form input[type="password"]:focus {
+      border-color: #1a73e8;
+      outline: none;
+    }
+
+    #login-btn {
+      width: 100%;
+      background: #1a73e8;
+      color: #ffffff;
+      padding: 13px;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #login-btn:hover {
+      background: #1557b0;
+    }
+
+    #login-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.85;
+    }
+
+    #login-error {
+      display: none;
+      color: #d32f2f;
+      font-size: 13px;
+      margin-top: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>VaultIQ</h1>
+    <p class="subtitle">Secure AI-powered knowledge base</p>
+    <form id="login-form" autocomplete="off">
+      <input type="text" id="username" placeholder="Username" autocomplete="off" spellcheck="false" readonly>
+      <input type="password" id="password" placeholder="Password" autocomplete="off" readonly>
+      <button type="button" id="login-btn">Sign In</button>
+      <div id="login-error"></div>
+    </form>
+  </div>
+
+  <script>
+    function showLoginError(message) {
+      const el = document.getElementById("login-error");
+      el.textContent = message;
+      el.style.display = "block";
+    }
+
+    function hideLoginError() {
+      const el = document.getElementById("login-error");
+      el.textContent = "";
+      el.style.display = "none";
+    }
+    function clearFormFields() {
+      const usernameInput = document.getElementById("username");
+      const passwordInput = document.getElementById("password");
+      usernameInput.value = "";
+      passwordInput.value = "";
+    }
+
+    function clearFormFieldsDelayed() {
+      // Clear immediately
+      clearFormFields();
+      // Clear again after a short delay to override browser autofill
+      setTimeout(clearFormFields, 100);
+      // Remove readonly attribute to allow typing
+      setTimeout(() => {
+        document.getElementById("username").removeAttribute("readonly");
+        document.getElementById("password").removeAttribute("readonly");
+      }, 50);
+    }
+
+    window.addEventListener("load", function () {
+      clearFormFieldsDelayed();
+      document.getElementById("login-error").style.display = "none";
+
+      // Clear URL parameter without reloading
+      if (window.location.search.includes("logout=true")) {
+        history.replaceState({}, document.title, "index.html");
+      }
+    });
+    function isTokenExpired(token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const now = Math.floor(Date.now() / 1000);
+        return payload.exp < now;
+      } catch (e) {
+        return true;
+      }
+    }
+
+    function checkAlreadyLoggedIn() {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+
+      if (!token || !role) return;
+
+      if (isTokenExpired(token)) {
+        localStorage.clear();
+        return;
+      }
+
+      window.location.replace("chatbot.html");
+    }
+
+
+    async function login() {
+      const usernameInput = document.getElementById("username");
+      const passwordInput = document.getElementById("password");
+      const loginBtn = document.getElementById("login-btn");
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+
+      // Clear fields immediately after getting values
+      clearFormFields();
+
+      hideLoginError();
+
+      if (!username || !password) {
+        showLoginError("Please enter username and password.");
+        return;
+      }
+
+      const originalText = loginBtn.textContent;
+      loginBtn.textContent = "Signing in...";
+      loginBtn.disabled = true;
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/auth/token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+        });
+
+        if (response.status === 200) {
+          const data = await response.json();
+          localStorage.setItem("token", data.access_token);
+          localStorage.setItem("role", data.role);
+          localStorage.setItem("username", username);
+          window.location.replace("chatbot.html");
+          return;
+        }
+
+        loginBtn.disabled = false;
+        loginBtn.textContent = originalText;
+        showLoginError("Invalid username or password. Please try again.");
+      } catch (err) {
+        loginBtn.disabled = false;
+        loginBtn.textContent = originalText;
+        showLoginError("Cannot connect to server. Make sure the API is running.");
+      }
+    }
+
+    document.getElementById("login-btn").addEventListener("click", login);
+    document.getElementById("login-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      login();
+    });
+
+    document.getElementById("username").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById("password").focus();
+      }
+    });
+
+    document.getElementById("password").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        login();
+      }
+    });
+
+    checkAlreadyLoggedIn();
+  </script>
+</body>
+
+</html>

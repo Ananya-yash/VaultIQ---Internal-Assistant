@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VaultIQ</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Format assistant answer text */
+.bubble p {
+    margin: 0 0 8px 0;
+}
+
+.bubble ul, .bubble ol {
+    margin: 6px 0;
+    padding-left: 20px;
+}
+
+.bubble li {
+    margin-bottom: 4px;
+    line-height: 1.5;
+}
+
+.bubble strong {
+    font-weight: 600;
+}
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <div id="sidebar">
+      <div class="sidebar-brand">🤖 VaultIQ</div>
+      <hr class="sidebar-divider" />
+      <div id="sidebar-username"></div>
+      <div id="role-badge"></div>
+      <p class="dept-heading">Accessible departments:</p>
+      <section id="dept-list"></section>
+
+      <div id="admin-panel" style="display:none">
+        <hr style="border-color:#2d3f53; margin:16px 0">
+
+        <div style="font-size:11px; text-transform:uppercase;
+                    letter-spacing:1px; color:#7a8a9a; margin-bottom:12px">
+          Admin Panel
+        </div>
+
+        <!-- Upload section -->
+        <div style="margin-bottom:16px">
+          <div style="font-size:12px; color:#aab4be; margin-bottom:6px">
+            Upload Document
+          </div>
+          <select id="upload-dept" style="width:100%; padding:7px;
+                   border-radius:6px; border:none; background:#2d3f53;
+                   color:white; font-size:13px; margin-bottom:8px">
+            <option value="">Select department...</option>
+            <option value="engineering">Engineering</option>
+            <option value="finance">Finance</option>
+            <option value="hr">HR</option>
+            <option value="marketing">Marketing</option>
+            <option value="shared">Shared</option>
+          </select>
+          <input type="file" id="upload-file"
+                 accept=".csv,.xlsx,.xls,.md,.txt"
+                 style="width:100%; font-size:12px; color:#aab4be;
+                        margin-bottom:8px">
+          <button id="upload-btn" onclick="uploadDocument()"
+                  style="width:100%; padding:8px; background:#1a73e8;
+                         color:white; border:none; border-radius:6px;
+                         font-size:13px; cursor:pointer">
+            Upload & Ingest
+          </button>
+          <div id="upload-status" style="font-size:12px; margin-top:6px;
+                                         color:#aab4be; min-height:16px">
+          </div>
+        </div>
+
+        <!-- Manage documents section -->
+        <div>
+          <div style="font-size:12px; color:#aab4be; margin-bottom:6px">
+            Manage Documents
+          </div>
+          <select id="manage-dept" style="width:100%; padding:7px;
+                   border-radius:6px; border:none; background:#2d3f53;
+                   color:white; font-size:13px; margin-bottom:8px"
+                  onchange="listDocuments()">
+            <option value="">Select department...</option>
+            <option value="engineering">Engineering</option>
+            <option value="finance">Finance</option>
+            <option value="hr">HR</option>
+            <option value="marketing">Marketing</option>
+            <option value="shared">Shared</option>
+          </select>
+          <div id="doc-list" style="max-height:200px; overflow-y:auto">
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-spacer" aria-hidden="true"></div>
+      <button id="logout-btn" type="button">Logout</button>
+    </div>
+    <div id="main">
+      <div id="chat-header">
+        <span class="chat-header-title">VaultIQ — Internal Assistant</span>
+        <div id="api-status" class="api-status" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="status-label">Checking…</span>
+        </div>
+      </div>
+      <div id="chat-messages"></div>
+      <div id="input-area">
+        <textarea id="query-input"
+          placeholder="Ask a question about company data... (Enter to send, Shift+Enter for new line)"
+          rows="1"></textarea>
+        <button id="send-btn" type="button" aria-label="Send">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    const ROLE_COLORS = {
+      engineering: "#1E88E5",
+      finance: "#43A047",
+      hr: "#FB8C00",
+      marketing: "#8E24AA",
+      shared: "#546E7A",
+      admin: "#E53935"
+    };
+
+    const ROLE_PERMISSIONS = {
+      engineering: ["engineering", "shared"],
+      finance: ["finance", "shared"],
+      hr: ["hr", "shared"],
+      marketing: ["marketing", "shared"],
+      shared: ["shared"],
+      admin: ["engineering", "finance", "hr", "marketing", "shared"]
+    };
+
+    function checkAuth() {
+        const token = localStorage.getItem("token");
+        const role = localStorage.getItem("role");
+        const username = localStorage.getItem("username");
+
+        if (!token || !role || !username) {
+          window.location.replace("index.html");
+          return;
+        }
+
+        // Push a new state to handle back button
+        history.pushState({ authenticated: true }, "", window.location.href);
+
+        window.onpopstate = function(event) {
+          // If user goes back, logout and redirect to index
+          if (event.state && event.state.authenticated) {
+            logout(true);
+          } else {
+            // If no state or different state, also logout
+            logout(true);
+          }
+        };
+
+        initializePage(role, username);
+      }
+
+    async function initializePage(role, username) {
+      document.getElementById("sidebar-username").textContent = `👤 ${username}`;
+
+      const roleBadge = document.getElementById("role-badge");
+      roleBadge.innerHTML = "";
+      const badgeSpan = document.createElement("span");
+      badgeSpan.className = "role-badge-pill";
+      badgeSpan.textContent = role;
+      badgeSpan.style.backgroundColor = ROLE_COLORS[role] || "#546E7A";
+      roleBadge.appendChild(badgeSpan);
+
+      const deptList = document.getElementById("dept-list");
+      deptList.innerHTML = "";
+      const departments = ROLE_PERMISSIONS[role] || [];
+      const ul = document.createElement("ul");
+      ul.className = "dept-bullets";
+      for (const department of departments) {
+        const li = document.createElement("li");
+        li.textContent = department;
+        ul.appendChild(li);
+      }
+      deptList.appendChild(ul);
+
+      if (role === "admin") {
+        document.getElementById("admin-panel").style.display = "block";
+      }
+
+      await refreshApiStatus();
+
+      document.getElementById("query-input").focus();
+    }
+
+    async function refreshApiStatus() {
+      const wrap = document.getElementById("api-status");
+      const dot = wrap.querySelector(".status-dot");
+      const label = wrap.querySelector(".status-label");
+      try {
+        const response = await fetch(`${API_BASE}/health`);
+        if (response.ok) {
+          wrap.classList.remove("api-status--disconnected");
+          wrap.classList.add("api-status--connected");
+          dot.classList.remove("status-dot--bad");
+          dot.classList.add("status-dot--ok");
+          label.textContent = "Connected";
+          return;
+        }
+      } catch (_) {
+        /* fall through */
+      }
+      wrap.classList.remove("api-status--connected");
+      wrap.classList.add("api-status--disconnected");
+      dot.classList.remove("status-dot--ok");
+      dot.classList.add("status-dot--bad");
+      label.textContent = "Disconnected";
+    }
+
+    function logout(skipConfirm) {
+      if (!skipConfirm && !confirm("Are you sure you want to logout?")) {
+        return;
+      }
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      localStorage.removeItem("username");
+      window.location.replace("index.html?logout=true");
+    }
+
+    async function sendMessage() {
+      const queryInput = document.getElementById("query-input");
+      const query = queryInput.value.trim();
+
+      if (!query) {
+        return;
+      }
+
+      appendUserBubble(query);
+      queryInput.value = "";
+      showTypingIndicator();
+
+      try {
+        const response = await fetch(`${API_BASE}/chat`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ query: query })
+        });
+
+        if (response.status === 401) {
+          removeTypingIndicator();
+          logout(true);
+          return;
+        }
+
+        if (response.status === 200) {
+          const data = await response.json();
+          removeTypingIndicator();
+          appendAssistantBubble(data.answer || "", data.sources || []);
+          return;
+        }
+
+        removeTypingIndicator();
+        appendAssistantBubble("Sorry, an error occurred. Please try again.", []);
+      } catch (err) {
+        removeTypingIndicator();
+        appendAssistantBubble("Sorry, an error occurred. Please try again.", []);
+      }
+    }
+
+    function appendUserBubble(text) {
+      const chatMessages = document.getElementById("chat-messages");
+      const message = document.createElement("div");
+      message.className = "message user-message";
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = text;
+
+      message.appendChild(bubble);
+      chatMessages.appendChild(message);
+      scrollToBottom();
+    }
+
+    function appendAssistantBubble(answer, sources) {
+      const chatMessages = document.getElementById("chat-messages");
+      const message = document.createElement("div");
+      message.className = "message assistant-message";
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.innerHTML = formatAnswer(answer);
+      message.appendChild(bubble);
+
+      const details = document.createElement("details");
+      details.className = "sources-details";
+
+      const summary = document.createElement("summary");
+      summary.textContent = "View sources";
+      details.appendChild(summary);
+
+      const body = document.createElement("div");
+      body.className = "sources-details-body";
+
+      if (Array.isArray(sources) && sources.length > 0) {
+        const table = document.createElement("table");
+        table.className = "sources-table";
+        const thead = document.createElement("thead");
+        const hr = document.createElement("tr");
+        const thFile = document.createElement("th");
+        thFile.textContent = "Source file";
+        const thDept = document.createElement("th");
+        thDept.textContent = "Department";
+        hr.appendChild(thFile);
+        hr.appendChild(thDept);
+        thead.appendChild(hr);
+        table.appendChild(thead);
+        const tbody = document.createElement("tbody");
+        for (const source of sources) {
+          const tr = document.createElement("tr");
+          const tdFile = document.createElement("td");
+          tdFile.textContent = source.source_file || "—";
+          const tdDept = document.createElement("td");
+          tdDept.textContent = source.department || "—";
+          tr.appendChild(tdFile);
+          tr.appendChild(tdDept);
+          tbody.appendChild(tr);
+        }
+        table.appendChild(tbody);
+        body.appendChild(table);
+      } else {
+        const empty = document.createElement("p");
+        empty.className = "sources-empty";
+        empty.textContent = "No specific sources retrieved.";
+        body.appendChild(empty);
+      }
+
+      details.appendChild(body);
+      message.appendChild(details);
+
+      chatMessages.appendChild(message);
+      scrollToBottom();
+    }
+
+    function showTypingIndicator() {
+      const chatMessages = document.getElementById("chat-messages");
+      const message = document.createElement("div");
+      message.id = "typing-indicator";
+      message.className = "message assistant-message";
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble bubble--typing";
+
+      const indicator = document.createElement("div");
+      indicator.className = "typing-dots";
+      indicator.innerHTML = "<span></span><span></span><span></span>";
+
+      bubble.appendChild(indicator);
+      message.appendChild(bubble);
+      chatMessages.appendChild(message);
+      scrollToBottom();
+    }
+
+    function removeTypingIndicator() {
+      const typingIndicator = document.getElementById("typing-indicator");
+      if (typingIndicator) {
+        typingIndicator.remove();
+      }
+    }
+
+    function scrollToBottom() {
+      const chatMessages = document.getElementById("chat-messages");
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    document.getElementById("send-btn").addEventListener("click", sendMessage);
+    document.getElementById("query-input").addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+    document.getElementById("logout-btn").addEventListener("click", logout);
+
+    function formatAnswer(text) {
+      const lines = text.split("\n");
+      let html = "";
+      let inList = false;
+
+      for (let line of lines) {
+        line = line.trim();
+        if (!line) {
+          if (inList) { html += "</ul>"; inList = false; }
+          continue;
+        }
+
+        const bulletMatch = line.match(/^[-*•]\s+(.+)/);
+        const numberedMatch = line.match(/^\d+\.\s+(.+)/);
+
+        if (bulletMatch) {
+          if (!inList) { html += "<ul>"; inList = true; }
+          html += `<li>${bulletMatch[1]}</li>`;
+        } else if (numberedMatch) {
+          if (!inList) { html += "<ul>"; inList = true; }
+          html += `<li>${numberedMatch[1]}</li>`;
+        } else {
+          if (inList) { html += "</ul>"; inList = false; }
+          line = line.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+          html += `<p>${line}</p>`;
+        }
+      }
+
+      if (inList) html += "</ul>";
+      return html;
+    }
+
+    async function uploadDocument() {
+      const dept = document.getElementById("upload-dept").value;
+      const fileInput = document.getElementById("upload-file");
+      const status = document.getElementById("upload-status");
+      const btn = document.getElementById("upload-btn");
+
+      if (!dept) {
+        status.style.color = "#e53935";
+        status.textContent = "Please select a department.";
+        return;
+      }
+      if (!fileInput.files || fileInput.files.length === 0) {
+        status.style.color = "#e53935";
+        status.textContent = "Please select a file.";
+        return;
+      }
+
+      const file = fileInput.files[0];
+
+      btn.disabled = true;
+      btn.textContent = "Uploading...";
+      status.style.color = "#aab4be";
+      status.textContent = "Uploading and ingesting...";
+
+      try {
+        const formData = new FormData();
+        formData.append("department", dept);
+        formData.append("file", file);
+
+        const response = await fetch("http://127.0.0.1:8000/admin/upload", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` },
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          status.style.color = "#43a047";
+          status.textContent = `✓ Ingested ${data.chunks_ingested} chunks from ${data.filename}`;
+          fileInput.value = "";
+          document.getElementById("upload-dept").value = "";
+          const manageDept = document.getElementById("manage-dept").value;
+          if (manageDept === dept) listDocuments();
+        } else {
+          status.style.color = "#e53935";
+          status.textContent = `✗ ${data.detail || "Upload failed."}`;
+        }
+      } catch (e) {
+        status.style.color = "#e53935";
+        status.textContent = "✗ Network error. Is the API running?";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Upload & Ingest";
+      }
+    }
+
+    async function listDocuments() {
+      const dept = document.getElementById("manage-dept").value;
+      const docList = document.getElementById("doc-list");
+
+      if (!dept) {
+        docList.innerHTML = "";
+        return;
+      }
+
+      docList.innerHTML = `<div style="font-size:12px;color:#aab4be">Loading...</div>`;
+
+      try {
+        const response = await fetch(
+          `http://127.0.0.1:8000/admin/documents?department=${dept}`,
+          { headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          docList.innerHTML = `<div style="font-size:12px;color:#e53935">${data.detail || "Failed to load documents."}</div>`;
+          return;
+        }
+
+        if (data.documents.length === 0) {
+          docList.innerHTML = `<div style="font-size:12px;color:#aab4be">No documents in this department.</div>`;
+          return;
+        }
+
+        docList.innerHTML = data.documents.map(doc => `
+          <div style="display:flex; justify-content:space-between; align-items:center;
+                      padding:6px 8px; background:#2d3f53; border-radius:6px; margin-bottom:4px">
+            <div>
+              <div style="font-size:12px; color:white; word-break:break-all">${doc.filename}</div>
+              <div style="font-size:11px; color:#7a8a9a">${(doc.size_bytes / 1024).toFixed(1)} KB</div>
+            </div>
+            <button onclick="deleteDocument('${doc.department}', '${doc.filename}')"
+                    style="background:#e53935; color:white; border:none; border-radius:4px;
+                           padding:4px 8px; font-size:11px; cursor:pointer;
+                           white-space:nowrap; margin-left:8px">
+              Delete
+            </button>
+          </div>
+        `).join("");
+      } catch (e) {
+        docList.innerHTML = `<div style="font-size:12px;color:#e53935">Network error.</div>`;
+      }
+    }
+
+    async function deleteDocument(department, filename) {
+      const confirmed = confirm(
+        `Delete "${filename}" from ${department}?\n\n` +
+        `This will remove the file and all its chunks from the knowledge base. ` +
+        `This cannot be undone.`
+      );
+      if (!confirmed) return;
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/admin/documents", {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ department, filename })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          listDocuments();
+          const status = document.getElementById("upload-status");
+          status.style.color = "#43a047";
+          status.textContent = `✓ Deleted ${filename} from ${department}.`;
+        } else {
+          alert(`Delete failed: ${data.detail || "Unknown error."}`);
+        }
+      } catch (e) {
+        alert("Network error. Is the API running?");
+      }
+    }
+
+    checkAuth();
+  </script>
+</body>
+
+</html>
