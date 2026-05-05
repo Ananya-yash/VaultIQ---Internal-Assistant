@@ -34,7 +34,7 @@ app.add_middleware(
         "http://localhost:5500",
         "http://127.0.0.1:5500",
         "null",
-        "https://YOUR_HF_USERNAME-vaultiq-api.hf.space",
+        "https://AnanyaYash-vaultiq-api.hf.space",
         "https://vaultiq.netlify.app",
     ],
     allow_methods=["POST", "GET", "OPTIONS", "DELETE"],
