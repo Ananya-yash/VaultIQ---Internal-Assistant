@@ -35,7 +35,7 @@ app.add_middleware(
         "http://127.0.0.1:5500",
         "null",
         "https://AnanyaYash-vaultiq-api.hf.space",
-        "https://vaultiq.netlify.app",
+        "https://vault-iq.netlify.app",
     ],
     allow_methods=["POST", "GET", "OPTIONS", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
