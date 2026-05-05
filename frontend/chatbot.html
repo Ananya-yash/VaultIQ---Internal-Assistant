@@ -119,7 +119,7 @@
   </div>
 
   <script>
-    const API_BASE = "http://127.0.0.1:8000";
+    const API_BASE = "https://ananyayash-vaultiq-api.hf.space";
 
     const ROLE_COLORS = {
       engineering: "#1E88E5",
@@ -449,7 +449,7 @@
         formData.append("department", dept);
         formData.append("file", file);
 
-        const response = await fetch("http://127.0.0.1:8000/admin/upload", {
+        const response = await fetch("https://ananyayash-vaultiq-api.hf.space//admin/upload", {
           method: "POST",
           headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` },
           body: formData
@@ -490,7 +490,7 @@
 
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/admin/documents?department=${dept}`,
+          `https://ananyayash-vaultiq-api.hf.space/admin/documents?department=${dept}`,
           { headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } }
         );
 
@@ -535,7 +535,7 @@
       if (!confirmed) return;
 
       try {
-        const response = await fetch("http://127.0.0.1:8000/admin/documents", {
+        const response = await fetch("https://ananyayash-vaultiq-api.hf.space/admin/documents", {
           method: "DELETE",
           headers: {
             "Authorization": `Bearer ${localStorage.getItem("token")}`,
