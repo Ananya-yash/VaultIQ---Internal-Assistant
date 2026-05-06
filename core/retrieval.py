@@ -55,8 +55,14 @@ def get_allowed_departments(role: str) -> list[str]:
     return ROLE_PERMISSIONS[role]
 
 
-def build_qdrant_filter(role: str) -> Filter:
-    """Build a Qdrant payload filter that enforces department-level RBAC."""
+def build_qdrant_filter(role: str) -> Filter | None:
+    """Build a Qdrant payload filter that enforces department-level RBAC.
+
+    For admin users, returns None to allow access to all documents.
+    """
+    if role == "admin":
+        return None  # Admin can access all documents
+
     allowed_departments = get_allowed_departments(role)
     return Filter(
         must=[
