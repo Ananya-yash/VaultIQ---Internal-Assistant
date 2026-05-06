@@ -38,65 +38,6 @@
       <p class="dept-heading">Accessible departments:</p>
       <section id="dept-list"></section>
 
-      <div id="admin-panel" style="display:none">
-        <hr style="border-color:#2d3f53; margin:16px 0">
-
-        <div style="font-size:11px; text-transform:uppercase;
-                    letter-spacing:1px; color:#7a8a9a; margin-bottom:12px">
-          Admin Panel
-        </div>
-
-        <!-- Upload section -->
-        <div style="margin-bottom:16px">
-          <div style="font-size:12px; color:#aab4be; margin-bottom:6px">
-            Upload Document
-          </div>
-          <select id="upload-dept" style="width:100%; padding:7px;
-                   border-radius:6px; border:none; background:#2d3f53;
-                   color:white; font-size:13px; margin-bottom:8px">
-            <option value="">Select department...</option>
-            <option value="engineering">Engineering</option>
-            <option value="finance">Finance</option>
-            <option value="hr">HR</option>
-            <option value="marketing">Marketing</option>
-            <option value="shared">Shared</option>
-          </select>
-          <input type="file" id="upload-file"
-                 accept=".csv,.xlsx,.xls,.md,.txt"
-                 style="width:100%; font-size:12px; color:#aab4be;
-                        margin-bottom:8px">
-          <button id="upload-btn" onclick="uploadDocument()"
-                  style="width:100%; padding:8px; background:#1a73e8;
-                         color:white; border:none; border-radius:6px;
-                         font-size:13px; cursor:pointer">
-            Upload & Ingest
-          </button>
-          <div id="upload-status" style="font-size:12px; margin-top:6px;
-                                         color:#aab4be; min-height:16px">
-          </div>
-        </div>
-
-        <!-- Manage documents section -->
-        <div>
-          <div style="font-size:12px; color:#aab4be; margin-bottom:6px">
-            Manage Documents
-          </div>
-          <select id="manage-dept" style="width:100%; padding:7px;
-                   border-radius:6px; border:none; background:#2d3f53;
-                   color:white; font-size:13px; margin-bottom:8px"
-                  onchange="listDocuments()">
-            <option value="">Select department...</option>
-            <option value="engineering">Engineering</option>
-            <option value="finance">Finance</option>
-            <option value="hr">HR</option>
-            <option value="marketing">Marketing</option>
-            <option value="shared">Shared</option>
-          </select>
-          <div id="doc-list" style="max-height:200px; overflow-y:auto">
-          </div>
-        </div>
-      </div>
-
       <div class="sidebar-spacer" aria-hidden="true"></div>
       <button id="logout-btn" type="button">Logout</button>
     </div>
@@ -188,10 +129,6 @@
       }
       deptList.appendChild(ul);
 
-      if (role === "admin") {
-        document.getElementById("admin-panel").style.display = "block";
-      }
-
       await refreshApiStatus();
 
       document.getElementById("query-input").focus();
@@ -241,6 +178,7 @@
 
       appendUserBubble(query);
       queryInput.value = "";
+      queryInput.style.height = "44px";
       showTypingIndicator();
 
       try {
@@ -386,6 +324,12 @@
         sendMessage();
       }
     });
+
+    const queryInput = document.getElementById("query-input");
+    queryInput.addEventListener("input", () => {
+      queryInput.style.height = "44px";
+      queryInput.style.height = queryInput.scrollHeight + "px";
+    });
     document.getElementById("logout-btn").addEventListener("click", logout);
 
     function formatAnswer(text) {
@@ -418,145 +362,6 @@
 
       if (inList) html += "</ul>";
       return html;
-    }
-
-    async function uploadDocument() {
-      const dept = document.getElementById("upload-dept").value;
-      const fileInput = document.getElementById("upload-file");
-      const status = document.getElementById("upload-status");
-      const btn = document.getElementById("upload-btn");
-
-      if (!dept) {
-        status.style.color = "#e53935";
-        status.textContent = "Please select a department.";
-        return;
-      }
-      if (!fileInput.files || fileInput.files.length === 0) {
-        status.style.color = "#e53935";
-        status.textContent = "Please select a file.";
-        return;
-      }
-
-      const file = fileInput.files[0];
-
-      btn.disabled = true;
-      btn.textContent = "Uploading...";
-      status.style.color = "#aab4be";
-      status.textContent = "Uploading and ingesting...";
-
-      try {
-        const formData = new FormData();
-        formData.append("department", dept);
-        formData.append("file", file);
-
-        const response = await fetch("https://ananyayash-vaultiq-api.hf.space//admin/upload", {
-          method: "POST",
-          headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` },
-          body: formData
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          status.style.color = "#43a047";
-          status.textContent = `✓ Ingested ${data.chunks_ingested} chunks from ${data.filename}`;
-          fileInput.value = "";
-          document.getElementById("upload-dept").value = "";
-          const manageDept = document.getElementById("manage-dept").value;
-          if (manageDept === dept) listDocuments();
-        } else {
-          status.style.color = "#e53935";
-          status.textContent = `✗ ${data.detail || "Upload failed."}`;
-        }
-      } catch (e) {
-        status.style.color = "#e53935";
-        status.textContent = "✗ Network error. Is the API running?";
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Upload & Ingest";
-      }
-    }
-
-    async function listDocuments() {
-      const dept = document.getElementById("manage-dept").value;
-      const docList = document.getElementById("doc-list");
-
-      if (!dept) {
-        docList.innerHTML = "";
-        return;
-      }
-
-      docList.innerHTML = `<div style="font-size:12px;color:#aab4be">Loading...</div>`;
-
-      try {
-        const response = await fetch(
-          `https://ananyayash-vaultiq-api.hf.space/admin/documents?department=${dept}`,
-          { headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          docList.innerHTML = `<div style="font-size:12px;color:#00FF00">${data.detail || "Uploaded Successfully."}</div>`;
-          return;
-        }
-
-        if (data.documents.length === 0) {
-          docList.innerHTML = `<div style="font-size:12px;color:#00FF00">"Uploaded successfully"</div>`;
-          return;
-        }
-
-        docList.innerHTML = data.documents.map(doc => `
-          <div style="display:flex; justify-content:space-between; align-items:center;
-                      padding:6px 8px; background:#2d3f53; border-radius:6px; margin-bottom:4px">
-            <div>
-              <div style="font-size:12px; color:white; word-break:break-all">${doc.filename}</div>
-              <div style="font-size:11px; color:#7a8a9a">${(doc.size_bytes / 1024).toFixed(1)} KB</div>
-            </div>
-            <button onclick="deleteDocument('${doc.department}', '${doc.filename}')"
-                    style="background:#e53935; color:white; border:none; border-radius:4px;
-                           padding:4px 8px; font-size:11px; cursor:pointer;
-                           white-space:nowrap; margin-left:8px">
-              Delete
-            </button>
-          </div>
-        `).join("");
-      } catch (e) {
-        docList.innerHTML = `<div style="font-size:12px;color:#e53935">Network error.</div>`;
-      }
-    }
-
-    async function deleteDocument(department, filename) {
-      const confirmed = confirm(
-        `Delete "${filename}" from ${department}?\n\n` +
-        `This will remove the file and all its chunks from the knowledge base. ` +
-        `This cannot be undone.`
-      );
-      if (!confirmed) return;
-
-      try {
-        const response = await fetch("https://ananyayash-vaultiq-api.hf.space/admin/documents", {
-          method: "DELETE",
-          headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ department, filename })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          listDocuments();
-          const status = document.getElementById("upload-status");
-          status.style.color = "#43a047";
-          status.textContent = `✓ Deleted ${filename} from ${department}.`;
-        } else {
-          alert(`Delete failed: ${data.detail || "Unknown error."}`);
-        }
-      } catch (e) {
-        alert("Network error. Is the API running?");
-      }
     }
 
     checkAuth();

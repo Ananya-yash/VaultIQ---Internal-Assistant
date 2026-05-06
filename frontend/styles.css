@@ -192,6 +192,7 @@ body {
 #query-input {
   flex: 1;
   min-height: 44px;
+  max-height: 200px;
   height: 44px;
   resize: none;
   border: 1px solid #ddd;
@@ -199,6 +200,7 @@ body {
   padding: 10px 14px;
   font-size: 14px;
   font-family: inherit;
+  overflow-y: auto;
 }
 
 #query-input:focus {

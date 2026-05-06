@@ -31,7 +31,8 @@ def generate(query: str, role: str) -> dict[str, object]:
         return {"answer": OUT_OF_SCOPE_ANSWER, "sources": []}
 
     # 2. Vector retrieval with RBAC filter
-    retrieval_results = retrieve(query, role,top_k = 10)
+    top_k = 20 if role == "admin" else 10
+    retrieval_results = retrieve(query, role, top_k=top_k)
     if not retrieval_results:
         return {"answer": FALLBACK_ANSWER, "sources": []}
 
