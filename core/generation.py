@@ -62,12 +62,15 @@ def generate(query: str, role: str) -> dict[str, object]:
     answer = redact_pii(response.content.strip())
 
     # 6. Source metadata — department and file only, no raw text
-    sources = [
-        {
+    seen = set()
+    sources = []
+    for chunk in retrieval_results:
+        key = (chunk.get("source_file", ""), chunk.get("department", ""))
+    if key not in seen:
+        seen.add(key)
+        sources.append({
             "department": chunk.get("department", "unknown"),
             "source_file": chunk.get("source_file", "unknown"),
-        }
-        for chunk in retrieval_results
-    ]
+        })
 
     return {"answer": answer, "sources": sources}
