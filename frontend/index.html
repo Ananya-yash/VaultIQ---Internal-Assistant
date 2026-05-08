@@ -97,8 +97,15 @@
     <form id="login-form" autocomplete="off">
       <input type="text" id="username" placeholder="Username" autocomplete="off" spellcheck="false" readonly>
       <input type="password" id="password" placeholder="Password" autocomplete="off" readonly>
-      <button type="button" id="login-btn">Sign In</button>
+      <button type="button" id="login-btn">Log In</button>
       <div id="login-error"></div>
+      <p style="margin:16px 0 0; text-align:center; font-size:12px; color:#999">
+        Important document before starting —
+        <a href="Rag-chatbot.txt" download
+           style="color:#1a73e8; text-decoration:none; font-weight:500">
+          Download guide
+        </a>
+      </p></p>
     </form>
   </div>
 
@@ -186,7 +193,7 @@
       }
 
       const originalText = loginBtn.textContent;
-      loginBtn.textContent = "Signing in...";
+      loginBtn.textContent = "Logging in...";
       loginBtn.disabled = true;
 
       try {

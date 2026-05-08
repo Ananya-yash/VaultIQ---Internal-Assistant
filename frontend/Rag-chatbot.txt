@@ -1,0 +1,154 @@
+╔══════════════════════════════════════════════════════════════════╗
+║              VaultIQ — Important Guide Before Starting           ║
+╚══════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  WHAT IS VAULTIQ?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  VaultIQ is a secure, role-based AI assistant that answers
+  questions using your company's internal documents.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  USER CREDENTIALS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Username         Password       Department
+  ─────────────────────────────────────────────────────────────────
+  eng_user         eng123         Engineering
+  fin_user         fin123         Finance
+  hr_user          hr123          HR
+  mkt_user         mkt123         Marketing
+  shared_user      shared123      Shared documents only
+  admin_user       admin123       Full access (all departments)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ACCESS RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  • Each user can only query documents from their own department
+    plus shared documents.
+  • Admin has access to all departments.
+  • Tokens expire after 8 hours — log in again if your session ends.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SAMPLE QUESTIONS TO ASK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ┌─ ENGINEERING ──────────────────────────────────────────────────┐
+
+  1. How is the data layer segmented among PostgreSQL, MongoDB, and
+     Redis to handle different types of workloads?
+
+  2. What are the primary frameworks and languages used for the
+     frontend, mobile, and backend layers?
+
+  3. What automated checks must be met before a pull request is
+     eligible for code review?
+
+  4. How does the system implement data protection and encryption
+     for data in transit and at rest?
+
+  5. What is the resolution SLA for a defect classified as
+     S1 (Critical)?
+
+  6. What deployment strategy is used when releasing code to
+     Production?
+
+  7. What are the three primary features targeted for short-term
+     AI and Machine Learning integration?
+
+  └────────────────────────────────────────────────────────────────┘
+
+  ┌─ FINANCE ──────────────────────────────────────────────────────┐
+
+  1. Revenue grew 28% while net income rose only 12% — which
+     vendor expense drove this discrepancy?
+
+  2. Annual gross margin rose from 55% to 64%; what operational
+     strategy was credited for this 9-point improvement?
+
+  3. With a DSO of 45 days against a 30-day benchmark, what
+     mitigation plan was implemented in Q3 to accelerate
+     receivables?
+
+  4. Q2 focused on Southeast Asian influencer marketing while Q3
+     targeted Latin American loyalty programs — which region faced
+     higher vendor cost inflation?
+
+  5. Annual investing activities reached $260 million; how did the
+     Q4 investment peak correlate with that quarter's financing
+     cash inflows?
+
+  └────────────────────────────────────────────────────────────────┘
+
+  ┌─ HR ───────────────────────────────────────────────────────────┐
+
+  1. Which employee in the Technology department has a Performance
+     Rating of 1 but earns above 1,500,000? What is their role
+     and location?
+
+  2. Which employee has the highest Attendance Percentage (99.98%)?
+     List their name, department, and Performance Rating.
+
+  3. In the Finance department, which employee has taken the most
+     leaves (26), and what is their remaining Leave Balance?
+
+  4. Which location has the highest concentration of Relationship
+     Managers, and what is the average Performance Rating for that
+     role in that city?
+
+  5. Employee FINEMP1007 manages several people — who among their
+     reports has the earliest joining date, and what is that
+     employee's current salary?
+
+  └────────────────────────────────────────────────────────────────┘
+
+  ┌─ MARKETING ────────────────────────────────────────────────────┐
+
+  1. Between Q1 and Q3, FinNova targeted Europe, Southeast Asia,
+     and Latin America. In which country did "regulatory delays"
+     hinder acquisition targets, and how did the next quarter's
+     strategy aim to resolve this?
+
+  2. Q2 2024 saw the highest marketing spend at $2.5 million. How
+     did the targeted CPA in Q2 compare to Q3, and what does this
+     shift indicate about marketing efficiency?
+
+  3. Which initiative — InstantPay (Q1) or the loyalty program
+     (Q3) — resulted in higher initial sign-ups, and what was the
+     percentage over-performance?
+
+  4. In which quarter did actual Conversion Rate performance fail
+     to meet its target, and what optimization was recommended?
+
+  5. Q3 targets a 3.75x ROI. Comparing Q1 and Q3 preliminary ROI,
+     which quarter was closer to its target, and what was Q3's
+     remaining revenue gap?
+
+  └────────────────────────────────────────────────────────────────┘
+
+  ┌─ SHARED ───────────────────────────────────────────────────────┐
+
+  1. Which benefit requires exactly 5 years of continuous service,
+     and what is the legal minimum percentage for an annual bonus?
+
+  2. After how many consecutive sick days is a medical certificate
+     mandatory, and how many late arrivals per month trigger
+     disciplinary action?
+
+  3. Within how many working days must a salary discrepancy be
+     reported to HR, and what is the standard resolution timeframe?
+
+  4. What is the maximum annual reimbursement for industry
+     certifications, and how many years must an employee serve
+     post-payment to avoid repayment?
+
+  5. What is the maximum duration for processing a Full & Final
+     Settlement, and which 2023 Act governs employee data privacy?
+
+  └────────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  NOTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  You can ask any question to Admin.
+
+══════════════════════════════════════════════════════════════════════
