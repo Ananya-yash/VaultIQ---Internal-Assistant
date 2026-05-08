@@ -338,31 +338,41 @@
       let inList = false;
 
       for (let line of lines) {
-        line = line.trim();
-        if (!line) {
-          if (inList) { html += "</ul>"; inList = false; }
-          continue;
-        }
-
-        const bulletMatch = line.match(/^[-*•]\s+(.+)/);
-        const numberedMatch = line.match(/^\d+\.\s+(.+)/);
-
-        if (bulletMatch) {
-          if (!inList) { html += "<ul>"; inList = true; }
-          html += `<li>${bulletMatch[1]}</li>`;
-        } else if (numberedMatch) {
-          if (!inList) { html += "<ul>"; inList = true; }
-          html += `<li>${numberedMatch[1]}</li>`;
-        } else {
-          if (inList) { html += "</ul>"; inList = false; }
-          line = line.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-          html += `<p>${line}</p>`;
-        }
+          line = line.trim();
+          if (!line) {
+              if (inList) {
+                  html += "</ul>";
+                  inList = false;
+              }
+              continue;
       }
 
-      if (inList) html += "</ul>";
-      return html;
-    }
+            const bulletMatch  = line.match(/^[-*•]\s+(.+)/);
+            const numberedMatch = line.match(/^\d+\.\s+(.+)/);
+
+            // Lines ending with colon are headings — no bullet
+            const isHeading = line.endsWith(":");
+
+            if ((bulletMatch || numberedMatch) && !isHeading) {
+                if (!inList) {
+                    html += "<ul>";
+                    inList = true;
+                }
+                const content = bulletMatch ? bulletMatch[1] : numberedMatch[1];
+                html += `<li>${content}</li>`;
+            } else {
+                if (inList) {
+                    html += "</ul>";
+                    inList = false;
+                }
+                line = line.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+                html += `<p>${line}</p>`;
+            }
+        }
+
+        if (inList) html += "</ul>";
+        return html;
+}
 
     checkAuth();
   </script>
